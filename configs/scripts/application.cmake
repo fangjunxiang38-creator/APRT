@@ -1,0 +1,7 @@
+config_integer(_robot_control_priority 0 31 robot control_priority)
+config_integer(_robot_control_stack_size 2048 16384 robot control_stack_size)
+config_integer(_robot_control_period_ticks 1 20 robot control_period_ticks)
+config_bool(_robot_ps2_enabled robot ps2_enabled)
+config_integer(_robot_ps2_period_ms 10 100 robot ps2_period_ms)
+config_integer(_robot_ps2_bit_delay_us 3 20 robot ps2_bit_delay_us)
+config_integer(_robot_input_timeout_ms 20 1000 robot input_timeout_ms)
