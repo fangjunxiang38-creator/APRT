@@ -1,12 +1,43 @@
 {
     "robot": {
-    "control_priority": 2,
-    "control_stack_size": 4096,
-    "control_period_ticks": 5 ,   
-    "ps2_enabled": true,
-    "ps2_period_ms": 20,
-    "ps2_bit_delay_us": 5,
-    "input_timeout_ms": 100
+        "control": {
+            "priority": 2,
+            "stack_size": 4096,
+            "period_ticks": 5
+        },
+        "remote": {
+            "timeout_ms": 100,
+            "ps2": {
+                "poll_period_ms": 20,
+                "bit_delay_us": 5,
+                "deadzone": 0.02
+            }
+        },
+        "servo": {
+            "min_us": 500,
+            "home_us": 1500,
+            "max_us": 2500,
+            "rate_us_s": 300.0
+        },
+        "chassis": {
+            "outputs_enabled": false,
+            "motor_ids": [1, 2, 3, 4],
+            "motor_directions": [1, 1, 1, 1],
+            "feedback_timeout_ms": 50,
+            "wheel_radius_m": 0.03917,
+            "half_length_m": 0.105,
+            "half_width_m": 0.1425,
+            "max_vx": 0.3,
+            "max_vy": 0.3,
+            "max_wz": 0.5,
+            "max_wheel_speed": 10.0,
+            "linear_accel": 0.5,
+            "angular_accel": 1.0,
+            "speed_kp": 500.0,
+            "speed_ki": 0.0,
+            "speed_kd": 0.0,
+            "current_limit": 500
+        }
     },
     "vision": {
     "baud": 115200,
@@ -20,10 +51,7 @@
     "ui": {
         "timeout_ms": 100
     },
-    "ps2": {
-        "deadzone": 0.02,
-        "spi_timeout_ms": 20
-    },
+
     "boards": {
         "h723_mc02": {
             "ui_uart": "usart1",
@@ -34,6 +62,7 @@
             "ps2_spi": "spi1",
             "dmimu_can": "fdcan1",
             "ahrs_device": "bmi088",
+            "chassis_can":"none",
             "bmi088_thermal": {
                 "target": 45.0,
                 "boost": 0.06,
@@ -49,12 +78,13 @@
             "referee_uart": "usart1",
             "remoter_dr16_enabled": true,
             "remoter_vt03_enabled": true,
-            "remoter_ps2_enabled": true,
+            "ps2_spi_enabled": true,
+            "ps2_gpio_enabled":false,
             "bmi088_heater_enabled": true,
             "rfid_uart": "usart10",
             "buzzer_timer": "tim12",
             "buzzer_channel": 2,
-            "robot_ps2_pins": [
+            "ps2_gpio_pins": [
                 {"port": "none", "pin": 0},
                 {"port": "none", "pin": 0},
                 {"port": "none", "pin": 0},
@@ -70,27 +100,29 @@
             "ps2_spi": "none",
             "dmimu_can": "can1",
             "ahrs_device": "bmi088",
+            "chassis_can":"can1",
             "bmi088_thermal": {
                 "target": 45.0,
-                "boost": 0.06,
-                "reboost": 0.05,
-                "approach_start": 0.044,
-                "approach_end": 0.029,
-                "hold_max": 0.04,
-                "kp": 650.0,
-                "ki": 0.08,
-                "kd": 10.0,
+                "boost": 0.50,
+                "reboost": 0.50,
+                "approach_start": 0.40,
+                "approach_end": 0.40,
+                "hold_max": 0.40,
+                "kp": 6000.0,
+                "ki": 6.0,
+                "kd": 60.0,
                 "max_out": 900.0
             },
             "referee_uart": "none",
             "remoter_dr16_enabled": true,
             "remoter_vt03_enabled": false,
-            "remoter_ps2_enabled": false,
-            "bmi088_heater_enabled": false,
+            "ps2_spi_enabled": false,
+            "ps2_gpio_enabled":true,
+            "bmi088_heater_enabled": true,
             "rfid_uart": "usart1",
             "buzzer_timer": "tim4",
             "buzzer_channel": 3,
-            "robot_ps2_pins": [
+            "ps2_gpio_pins": [
                 {"port": "b", "pin": 14},
                 {"port": "b", "pin": 15},
                 {"port": "b", "pin": 12},
@@ -159,7 +191,6 @@
         "thread_priority": 4,
         "period_ticks": 1,
         "offline_timeout_ms": 100,
-        "ps2_period_ms": 10,
         "stack_size": 2048
     },
     "bmi088_heater": {

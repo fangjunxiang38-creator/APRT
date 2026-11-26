@@ -11,19 +11,24 @@ namespace motor
 class feedback_buffer
 {
 public:
-    void push(const uint8_t data[8]) noexcept
+    void push(const uint8_t data[8], uint32_t received_ms = 0) noexcept
     {
         std::memcpy(data_, data, sizeof(data_));
+        received_ms_ = received_ms;
         pending_ = true;
     }
 
-    bool take(uint8_t data[8]) noexcept
+    bool take(uint8_t data[8], uint32_t* received_ms = nullptr) noexcept
     {
         const auto previous = tx_interrupt_control(TX_INT_DISABLE);
         const bool pending = pending_;
         if (pending)
         {
             std::memcpy(data, data_, sizeof(data_));
+            if (received_ms != nullptr)
+            {
+                *received_ms = received_ms_;
+            }
             pending_ = false;
         }
         tx_interrupt_control(previous);
@@ -33,6 +38,7 @@ public:
 private:
     uint8_t data_[8]{};
     bool pending_ = false;
+    uint32_t received_ms_ = 0;
 };
 
 class manager_interface

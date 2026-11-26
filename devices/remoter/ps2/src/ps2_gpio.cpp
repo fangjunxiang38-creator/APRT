@@ -1,15 +1,11 @@
 #include "ps2_gpio.hpp"
 
-#include "ps2.hpp"
-#include "remoter.hpp"
-#include "user_config.hpp"
-#include "bsp_gpio.hpp"
 #include "bsp_dwt.hpp"
-#include "main.h"
+#include "peripherals.hpp"
 
-namespace robot
+namespace remotes::ps2
 {
-bool Ps2Gpio::init(const bsp::gpio::config (&pins)[4], uint32_t bit_delay_us)
+bool gpio::init(const bsp::gpio::config (&pins)[4], uint32_t bit_delay_us)
 {
     initialized_ = false;
 
@@ -47,14 +43,14 @@ bool Ps2Gpio::init(const bsp::gpio::config (&pins)[4], uint32_t bit_delay_us)
     return true;
 }
 
-bool Ps2Gpio::exchange(const uint8_t (&tx)[9], uint8_t (&rx)[9])
+bool gpio::exchange(const uint8_t (&tx)[frame_size], uint8_t (&rx)[frame_size])
 {
     using pnxtypes::status;
 
     bool ok = bsp::gpio::write(pins_[2], false) == status::ok;
     bsp::dwt::delay_us(20);
 
-    for (unsigned i = 0; i < 9 && ok; ++i)
+    for (unsigned i = 0; i < frame_size && ok; ++i)
     {
         rx[i] = 0;
 
@@ -90,68 +86,38 @@ bool Ps2Gpio::exchange(const uint8_t (&tx)[9], uint8_t (&rx)[9])
     return ok && released && clock_idle && command_idle;
 }
 
-bool Ps2Gpio::poll(Remote& result)
+bool gpio::poll(sample& result, float deadzone)
 {
-    if (!initialized_ || !remotes::enabled())
+    if (!initialized_)
     {
         return false;
     }
 
-    constexpr uint8_t setup[3][9]{{1, 0x43, 0, 1, 0, 0, 0, 0, 0}, {1, 0x44, 0, 1, 3, 0, 0, 0, 0},
-        {1, 0x43, 0, 0, 0x5A, 0x5A, 0x5A, 0x5A, 0x5A}};
+    constexpr uint8_t setup[3][frame_size]{{1, 0x43, 0, 1, 0, 0, 0, 0, 0},
+        {1, 0x44, 0, 1, 3, 0, 0, 0, 0}, {1, 0x43, 0, 0, 0x5A, 0x5A, 0x5A, 0x5A, 0x5A}};
 
-    remotes::ps2::frame raw{};
-
-    // 前三次轮询分别进入配置、设置模拟模式、退出配置。
+    frame raw{};
     if (setup_step_ < 3)
     {
         if (exchange(setup[setup_step_], raw.bytes))
         {
             ++setup_step_;
         }
-
         return false;
     }
 
-    constexpr uint8_t query[9]{1, 0x42, 0, 0, 0, 0, 0, 0, 0};
-    remotes::ps2::sample decoded{};
-
-    if (!exchange(query, raw.bytes) ||
-        remotes::ps2::decode(raw, decoded, user_config::ps2_deadzone) != pnxtypes::status::ok)
+    constexpr uint8_t query[frame_size]{1, 0x42, 0, 0, 0, 0, 0, 0, 0};
+    if (!exchange(query, raw.bytes) || decode(raw, result, deadzone) != pnxtypes::status::ok)
     {
         if (++missed_ >= 3)
         {
             missed_ = 0;
             setup_step_ = 0;
         }
-
         return false;
     }
 
     missed_ = 0;
-
-    if (!remotes::enabled())
-    {
-        return false;
-    }
-
-    // 将模板的布尔按键结构转换成 PS2 顺序的 16 位按键值。
-    const auto& key = decoded.buttons;
-    const bool pressed[16]{key.select, key.l3, key.r3, key.start, key.up, key.right, key.down,
-        key.left, key.l2, key.r2, key.l1, key.r1, key.triangle, key.circle, key.cross, key.square};
-
-    uint16_t buttons = 0;
-
-    for (unsigned i = 0; i < 16; ++i)
-    {
-        if (pressed[i])
-        {
-            buttons |= static_cast<uint16_t>(1U << i);
-        }
-    }
-
-    result = {decoded.lx, decoded.ly, decoded.rx, decoded.ry, buttons, HAL_GetTick(), true};
-
     return true;
 }
-} // namespace robot
+} // namespace remotes::ps2

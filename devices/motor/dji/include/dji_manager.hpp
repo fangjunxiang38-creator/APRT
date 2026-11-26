@@ -24,7 +24,7 @@ public:
     // Register before CAN init. The manager and motors must outlive the CAN callbacks.
     bool register_motor(motor& instance, bsp::can::handle bus, uint16_t feedback_id) noexcept;
     bool receive(bsp::can::handle bus, uint16_t id, const uint8_t data[8]) noexcept;
-    bool update_feedback(motor& instance) noexcept;
+    bool update_feedback(motor& instance, uint32_t* received_ms = nullptr) noexcept;
     void update() override;
 
     void set_period(float seconds) noexcept

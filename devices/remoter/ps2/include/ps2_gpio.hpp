@@ -1,18 +1,18 @@
 #pragma once
 
-#include "config.hpp"
-#include "types.hpp"
+#include "ps2.hpp"
 
-namespace robot
+namespace remotes::ps2
 {
-class Ps2Gpio
+class gpio
 {
 public:
+    // 引脚顺序为 DATA、CMD、CS、CLK。
     bool init(const bsp::gpio::config (&pins)[4], uint32_t bit_delay_us);
-    bool poll(Remote& result);
+    bool poll(sample& result, float deadzone);
 
 private:
-    bool exchange(const uint8_t (&tx)[9], uint8_t (&rx)[9]);
+    bool exchange(const uint8_t (&tx)[frame_size], uint8_t (&rx)[frame_size]);
 
     bsp::gpio::config pins_[4]{};
     uint32_t delay_us_ = 5;
@@ -20,4 +20,4 @@ private:
     uint8_t missed_ = 0;
     bool initialized_ = false;
 };
-} // namespace robot
+} // namespace remotes::ps2

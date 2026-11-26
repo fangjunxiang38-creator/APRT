@@ -31,7 +31,8 @@ RFID 的遥控限制在设备解码层执行，应用之前缓存的控制目标
 | `configs/scripts/` 文件 | 职责 |
 | --- | --- |
 | `values.cmake` | 数值、布尔值和三维向量校验 |
-| `communication.cmake` | UI、PS2、遥控与裁判接收参数 |
+| `communication.cmake` | UI、视觉、USB、遥控与裁判接收参数 |
+| `application.cmake` | 机器人控制线程、PS2 轮询和底盘参数 |
 | `imu.cmake` | DMIMU、AHRS、ESKF 和温控参数 |
 | `boards.cmake` | 板级资源、启用选择和资源冲突检查 |
 | `user_config.hpp.in` | 生成头文件模板 |
@@ -50,7 +51,8 @@ CMake 配置阶段自动生成头文件，构建时会检测 JSON 修改并重�
 | `dmimu` | 设备 ID、主动/请求模式、组帧及离线超时 |
 | `bmi088_heater` | 温控周期、温度超时、稳定判定、线程优先级和栈大小 |
 | `referee` | 接收线程优先级、周期、离线超时和 `stack_size`（默认 2048 字节） |
-| `ui`、`ps2` | 发送超时、PS2 时序及死区 |
+| `ui` | 发送超时 |
+| `robot.control`、`robot.remote`、`robot.chassis` | 控制线程、遥控输入、四轮底盘参数 |
 | `remoter` | 供应用组织遥控处理的调度参数，不会创建遥控线程 |
 | `application.imu_offset` | 应用参考点到 IMU 的位移，设备服务不自动执行位置补偿 |
 

@@ -36,4 +36,9 @@ inline bool prepare_ps2_pins(const bsp::gpio::config (&pins)[4])
 
     return true;
 }
+
+inline void latch_servo_pulses(const bsp::pwm::config& timer)
+{
+    bsp::peripherals::tim_handle(timer.instance)->Instance->EGR = TIM_EGR_UG;
+}
 } // namespace board

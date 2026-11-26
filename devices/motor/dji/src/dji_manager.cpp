@@ -1,4 +1,5 @@
 #include "dji_manager.hpp"
+#include "main.h"
 
 namespace motor::dji
 {
@@ -51,11 +52,11 @@ void manager::on_receive(bsp::can::handle bus, const bsp::can::rx_frame& frame) 
     const auto slot = frame.id - 0x201;
     if (motors_[index][slot])
     {
-        feedback_[index][slot].push(frame.data);
+        feedback_[index][slot].push(frame.data, HAL_GetTick());
     }
 }
 
-bool manager::update_feedback(motor& instance) noexcept
+bool manager::update_feedback(motor& instance, uint32_t* received_ms) noexcept
 {
     for (uint8_t bus = 1; bus < buses; ++bus)
     {
@@ -64,7 +65,7 @@ bool manager::update_feedback(motor& instance) noexcept
             if (motors_[bus][slot] == &instance)
             {
                 uint8_t data[8];
-                if (feedback_[bus][slot].take(data))
+                if (feedback_[bus][slot].take(data, received_ms))
                 {
                     instance.receive(data);
                     return true;

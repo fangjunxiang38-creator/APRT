@@ -24,9 +24,10 @@ target_link_libraries(my_app PRIVATE devices)
 | `boards.<板名>.ui_uart` | UI 串口 |
 | `boards.<板名>.dr16_uart / vt03_uart` | 遥控器串口 |
 | `boards.<板名>.ps2_cs` | PS2 低有效 GPIO 片选 |
-| `boards.<板名>.ps2_spi` | PS2 硬件 SPI，启用 PS2 时必需 |
+| `boards.<板名>.ps2_spi`、`ps2_spi_enabled` | 硬件 SPI 和 SPI 路径开关 |
+| `boards.<板名>.ps2_gpio_enabled`、`ps2_gpio_pins` | GPIO 路径开关和 DATA、CMD、CS、CLK 引脚 |
 | `ui.timeout_ms` | UI 发送超时，毫秒 |
-| `ps2` | SPI 超时及摇杆死区 |
+| `robot.remote.ps2` | 应用轮询周期、GPIO 位延时和摇杆死区 |
 
 资源名称引用对应板卡 `config.hpp` 中已有的资源，`none` 表示未配置。
 新增引脚需先配置 CubeMX，再在板级配置中导出资源。板载 LED 接线随选板切换，
@@ -160,9 +161,10 @@ RX 回调在中断中执行，向线程传递时先复制数据。一次 idle �
 
 ### PS2
 
-H723 使用 SPI1：CMD PD7、DATA PB4、CLK PB3、CS PE15（低有效）；F407 默认未配置。
+H723 的 SPI 示例使用 SPI1：CMD PD7、DATA PB4、CLK PB3、CS PE15（低有效）。
+当前机器人应用轮询 GPIO 后端。F407 用 DATA PB14、CMD PB15、CS PB12、CLK PB13。
 
-F407 接 PS2 时需自行配置 SPI2、片选及板级映射/中断，不能只改 JSON。
+F407 若改接硬件 SPI，还需要配置 SPI2、片选及板级映射和中断。
 注意 `SCK = PCLK1 / SPI 分频`：默认 PCLK1=42 MHz，`/256` 约为 164 kHz；
 此前手柄测试通过的配置为 PCLK1=21 MHz、`/256`，约 82 kHz，SPI 使用模式 3、LSB first。
 若调整 APB1 时钟，须同步核对 CAN、UART、定时器/PWM 和 HAL 时基。

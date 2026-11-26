@@ -1,14 +1,6 @@
-# UI 与 PS2 的发送超时和输入死区。
+# USB 与 UI 参数。
 config_bool(_usb_enabled usb enabled)
 config_integer(_ui_timeout 0 2147483647 ui timeout_ms)
-config_number(_deadzone 0 1 ps2 deadzone)
-if(_deadzone GREATER_EQUAL 1)
-    message(FATAL_ERROR "ps2.deadzone must be less than 1")
-endif()
-if(NOT _deadzone MATCHES "[.eE]")
-    string(APPEND _deadzone ".0")
-endif()
-config_integer(_spi_timeout 1 2147483647 ps2 spi_timeout_ms)
 
 # 视觉串口波特率、姿态回传周期和收发数据有效期。时间单位为 ms。
 config_integer(_vision_baud 9600 921600 vision baud)
@@ -45,4 +37,4 @@ foreach(_module IN ITEMS referee remoter)
     config_integer(_${_module}_period 1 2147483647 ${_module} period_ticks)
     config_integer(_${_module}_offline 1 2147483647 ${_module} offline_timeout_ms)
 endforeach()
-config_integer(_remoter_ps2_period 1 2147483647 remoter ps2_period_ms)
+

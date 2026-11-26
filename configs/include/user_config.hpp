@@ -22,6 +22,7 @@ inline constexpr imu::bmi088_thermal bmi088_thermal{45.0f, 0.059999999999999998f
     0.050000000000000003f, 0.043999999999999997f, 0.029000000000000001f, 0.040000000000000001f,
     300.0f, 0.059999999999999998f, 100.0f, 90.0f};
 inline constexpr bsp::can::config dmimu_can{bsp::can::handle::fdcan1, bsp::can::id_type::standard};
+inline constexpr bsp::can::config chassis_can{bsp::can::handle::none};
 inline constexpr auto rfid_uart = bsp::peripherals::usart10;
 inline constexpr auto vision_uart = bsp::usart::config{};
 inline constexpr buzzer::config rfid_buzzer{bsp::peripherals::tim12,
@@ -37,18 +38,20 @@ inline constexpr auto vt03_uart = bsp::peripherals::uart7;
 inline constexpr bsp::gpio::config ps2_cs{(bsp::peripherals::ps2_cs).instance,
     (bsp::peripherals::ps2_cs).pin, bsp::active_level::low};
 inline constexpr auto ps2_spi = bsp::spi::handle::spi1;
-inline constexpr bsp::gpio::config robot_ps2_pins[4]{{bsp::gpio::port::none, 0}, {bsp::gpio::port::none, 0}, {bsp::gpio::port::none, 0}, {bsp::gpio::port::none, 0}, };
+inline constexpr bool ps2_gpio_enabled = false;
+inline constexpr bsp::gpio::config ps2_gpio_pins[4]{{bsp::gpio::port::none, 0}, {bsp::gpio::port::none, 0}, {bsp::gpio::port::none, 0}, {bsp::gpio::port::none, 0}, };
 #elif defined(STM32F407xx)
 #define USER_AHRS_DEVICE 1
 #define USER_REMOTER_DR16 1
 #define USER_REMOTER_VT03 0
 #define USER_REMOTER_PS2 0
 inline constexpr char ahrs_device[] = "bmi088";
-inline constexpr bool bmi088_heater_enabled = false;
-inline constexpr imu::bmi088_thermal bmi088_thermal{45.0f, 0.059999999999999998f,
-    0.050000000000000003f, 0.043999999999999997f, 0.029000000000000001f, 0.040000000000000001f,
-    650.0f, 0.080000000000000002f, 10.0f, 900.0f};
+inline constexpr bool bmi088_heater_enabled = true;
+inline constexpr imu::bmi088_thermal bmi088_thermal{45.0f, 0.5f,
+    0.5f, 0.40000000000000002f, 0.40000000000000002f, 0.40000000000000002f,
+    6000.0f, 6.0f, 60.0f, 900.0f};
 inline constexpr bsp::can::config dmimu_can{bsp::can::handle::can1, bsp::can::id_type::standard};
+inline constexpr bsp::can::config chassis_can{bsp::can::handle::can1};
 inline constexpr auto rfid_uart = bsp::peripherals::usart1;
 inline constexpr auto vision_uart = bsp::peripherals::usart6;
 inline constexpr buzzer::config rfid_buzzer{bsp::peripherals::tim4,
@@ -64,7 +67,8 @@ inline constexpr auto vt03_uart = bsp::peripherals::usart6;
 inline constexpr bsp::gpio::config ps2_cs{(bsp::gpio::config{}).instance,
     (bsp::gpio::config{}).pin, bsp::active_level::low};
 inline constexpr auto ps2_spi = bsp::spi::handle::none;
-inline constexpr bsp::gpio::config robot_ps2_pins[4]{{bsp::gpio::port::b, 14}, {bsp::gpio::port::b, 15}, {bsp::gpio::port::b, 12}, {bsp::gpio::port::b, 13}, };
+inline constexpr bool ps2_gpio_enabled = true;
+inline constexpr bsp::gpio::config ps2_gpio_pins[4]{{bsp::gpio::port::b, 14}, {bsp::gpio::port::b, 15}, {bsp::gpio::port::b, 12}, {bsp::gpio::port::b, 13}, };
  #else
 #error Unsupported board
 #endif
@@ -100,16 +104,53 @@ inline constexpr math::vector3 imu_offset
 };
 } // namespace application
 
-namespace robot
+namespace robot::control
 {
-inline constexpr uint32_t control_priority = 2;
-inline constexpr ULONG control_stack_size = 4096;
-inline constexpr ULONG control_period_ticks = 5;
-inline constexpr bool ps2_enabled = true;
-inline constexpr uint32_t ps2_period_ms = 20;
-inline constexpr uint32_t ps2_bit_delay_us = 5;
-inline constexpr uint32_t input_timeout_ms = 100;
-} // namespace robot
+inline constexpr uint32_t priority = 2;
+inline constexpr ULONG stack_size = 4096;
+inline constexpr ULONG period_ticks = 5;
+} // namespace robot::control
+
+namespace robot::remote
+{
+inline constexpr uint32_t timeout_ms = 100;
+
+namespace ps2
+{
+inline constexpr uint32_t poll_period_ms = 20;
+inline constexpr uint32_t bit_delay_us = 5;
+inline constexpr float deadzone = 0.02f;
+} // namespace ps2
+} // namespace robot::remote
+
+namespace robot::servo
+{
+inline constexpr uint32_t min_us = 500;
+inline constexpr uint32_t home_us = 1500;
+inline constexpr uint32_t max_us = 2500;
+inline constexpr float rate_us_s = 300.0f;
+} // namespace robot::servo
+
+namespace robot::chassis
+{
+inline constexpr bool outputs_enabled = false;
+inline constexpr uint8_t motor_ids[4]{1, 2, 3, 4};
+inline constexpr int8_t motor_directions[4]{1, 1, 1, 1};
+inline constexpr uint32_t feedback_timeout_ms = 50;
+inline constexpr float wheel_radius_m = 0.039170000000000003f;
+inline constexpr float half_length_m = 0.105f;
+inline constexpr float half_width_m = 0.14249999999999999f;
+inline constexpr float max_vx = 0.29999999999999999f;
+inline constexpr float max_vy = 0.29999999999999999f;
+inline constexpr float max_wz = 0.5f;
+inline constexpr float max_wheel_speed = 10.0f;
+inline constexpr float linear_accel = 0.5f;
+inline constexpr float angular_accel = 1.0f;
+inline constexpr float speed_kp = 500.0f;
+inline constexpr float speed_ki = 0.0f;
+inline constexpr float speed_kd = 0.0f;
+inline constexpr uint32_t current_limit = 500;
+} // namespace robot::chassis
 
 namespace ahrs
 {
@@ -170,7 +211,6 @@ inline constexpr uint32_t thread_priority = 4;
 inline constexpr ULONG stack_size = 2048;
 inline constexpr ULONG period_ticks = 1;
 inline constexpr uint32_t offline_timeout_ms = 100;
-inline constexpr uint32_t ps2_period_ms = 10;
 } // namespace remoter
 
 inline constexpr ui::config ui
@@ -187,8 +227,6 @@ inline constexpr bsp::usart::line_config dr16_line{100000, bsp::usart::word_leng
     bsp::usart::stop_bits::one, bsp::usart::parity::even, false, true};
 inline constexpr bsp::usart::line_config vt03_line{115200, bsp::usart::word_length::bits_8,
     bsp::usart::stop_bits::one, bsp::usart::parity::none, false, true};
-inline constexpr float ps2_deadzone = 0.02f;
-inline constexpr uint32_t ps2_spi_timeout_ms = 20;
 } // namespace user_config
 
 namespace user_config::rfid

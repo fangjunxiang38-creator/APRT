@@ -9,6 +9,7 @@
 
 extern "C" void app_start()
 {
+
     auto result = bsp::dwt::init();
     if (result != pnxtypes::status::ok)
     {
